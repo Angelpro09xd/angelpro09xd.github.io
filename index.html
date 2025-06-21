@@ -100,27 +100,11 @@
       text-shadow: 0 0 8px var(--orange);
     }
 
-    .toast {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(255, 153, 0, 0.9);
-      color: #000;
-      padding: 12px 24px;
-      border-radius: 20px;
+    .error {
+      margin-top: 15px;
+      color: #ff4c4c;
       font-weight: bold;
-      box-shadow: 0 0 15px var(--orange);
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s ease;
-      z-index: 9999;
-      user-select: none;
-    }
-
-    .toast.show {
-      opacity: 1;
-      pointer-events: auto;
+      text-shadow: 0 0 8px #ff0000;
     }
 
     @keyframes rgbText {
@@ -160,55 +144,61 @@
       placeholder="Introduce un ID de manifest..."
       autocomplete="off"
     />
-    <button id="descargarBtn">🚀 Descargar Manifest</button>
+    <button id="downloadBtn">🚀 Descargar Manifest</button>
+    <div id="message" class="error" style="display:none;"></div>
     <div class="footer">✨ Hecho con pasión por Angelpro09_Dev</div>
   </div>
 
-  <div id="toast" class="toast"></div>
-
   <script>
-    const toastEl = document.getElementById("toast");
+    // Array donde guardaremos los archivos disponibles desde files.xml
+    let archivosDisponibles = [];
 
-    function mostrarToast(msg, duracion = 3500) {
-      toastEl.textContent = msg;
-      toastEl.classList.add("show");
-      clearTimeout(toastEl._timeout);
-      toastEl._timeout = setTimeout(() => {
-        toastEl.classList.remove("show");
-      }, duracion);
-    }
-
-    let listaArchivos = [];
-
-    async function cargarListaArchivos() {
+    async function cargarXML() {
       try {
-        const response = await fetch('https://steamdatabase.s3.eu-north-1.amazonaws.com/');
-        if (!response.ok) throw new Error("No se pudo obtener la lista");
+        // Cambia 'files.xml' por la URL pública si usas GitHub Pages o la local si pruebas en local
+        const response = await fetch('files.xml');
+        if (!response.ok) throw new Error('No se pudo cargar la lista de archivos.');
         const text = await response.text();
+
+        // Parsear XML
         const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(text, "application/xml");
-        const keys = [...xmlDoc.getElementsByTagName("Key")].map(node => node.textContent);
-        return keys;
+        const xml = parser.parseFromString(text, "application/xml");
+
+        // Extraer los nombres de archivos de las etiquetas <Key>
+        const keys = [...xml.querySelectorAll('Contents > Key')];
+        archivosDisponibles = keys.map(k => k.textContent.trim());
+        console.log('Archivos cargados:', archivosDisponibles.length);
       } catch (error) {
-        mostrarToast("❌ Error al cargar lista de archivos");
-        console.error("Error al cargar lista de archivos:", error);
-        return [];
+        mostrarMensaje(error.message, true);
       }
     }
 
-    async function inicializar() {
-      mostrarToast("⌛ Cargando lista de archivos...");
-      listaArchivos = await cargarListaArchivos();
-      if (listaArchivos.length > 0) {
-        mostrarToast(`✅ Lista cargada (${listaArchivos.length} archivos)`);
-      } else {
-        mostrarToast("⚠️ No se pudo cargar la lista de archivos");
-      }
+    function mostrarMensaje(msg, error = false) {
+      const messageDiv = document.getElementById('message');
+      messageDiv.style.display = 'block';
+      messageDiv.textContent = msg;
+      messageDiv.style.color = error ? '#ff4c4c' : '#00ff00';
     }
 
-    function descargarArchivo(nombreArchivo) {
+    function ocultarMensaje() {
+      const messageDiv = document.getElementById('message');
+      messageDiv.style.display = 'none';
+      messageDiv.textContent = '';
+    }
+
+    function descargarArchivo(id) {
+      // Construir nombre archivo
+      const nombreArchivo = id + '.zip';
+
+      if (!archivosDisponibles.includes(nombreArchivo)) {
+        mostrarMensaje('❌ Archivo no encontrado.', true);
+        return;
+      }
+
+      ocultarMensaje();
+
       const url = `https://steamdatabase.s3.eu-north-1.amazonaws.com/${nombreArchivo}`;
-      const a = document.createElement("a");
+      const a = document.createElement('a');
       a.href = url;
       a.download = nombreArchivo;
       document.body.appendChild(a);
@@ -216,33 +206,17 @@
       document.body.removeChild(a);
     }
 
-    async function descargarZIP() {
-      const numero = document.getElementById("numberInput").value.trim();
-
+    document.getElementById('downloadBtn').addEventListener('click', () => {
+      const numero = document.getElementById('numberInput').value.trim();
       if (!numero) {
-        mostrarToast("⚠️ Introduce un número");
+        mostrarMensaje('⚠️ Por favor, introduce un número válido.', true);
         return;
       }
+      descargarArchivo(numero);
+    });
 
-      if (!/^\d+$/.test(numero)) {
-        mostrarToast("⚠️ Solo números enteros permitidos");
-        return;
-      }
-
-      const archivoBuscado = `${numero}.zip`;
-
-      if (!listaArchivos.includes(archivoBuscado)) {
-        mostrarToast("❌ Archivo no encontrado");
-        return;
-      }
-
-      mostrarToast("📦 Iniciando descarga...");
-      descargarArchivo(archivoBuscado);
-    }
-
-    document.getElementById("descargarBtn").addEventListener("click", descargarZIP);
-
-    window.addEventListener("load", inicializar);
+    // Cargar el XML al iniciar la página
+    window.onload = cargarXML;
   </script>
 </body>
 </html>
