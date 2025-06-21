@@ -5,8 +5,8 @@
   <title>Descarga Steam ZIP</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
-    input, button { padding: 8px; font-size: 16px; }
-    #resultado { margin-top: 15px; font-weight: bold; }
+    input, button { padding: 10px; font-size: 16px; }
+    #resultado { margin-top: 15px; font-weight: bold; color: red; }
   </style>
 </head>
 <body>
@@ -20,39 +20,30 @@
 
     // Cargar y procesar files.xml al iniciar la página
     fetch('files.xml')
-      .then(response => response.text())
-      .then(data => {
+      .then(res => res.text())
+      .then(str => {
         const parser = new DOMParser();
-        const xml = parser.parseFromString(data, 'application/xml');
-        const keys = xml.getElementsByTagName('Key');
+        const xml = parser.parseFromString(str, "application/xml");
+        const keys = xml.getElementsByTagName("Key");
         for (let i = 0; i < keys.length; i++) {
-          archivosDisponibles.push(keys[i].textContent.trim());
+          archivosDisponibles.push(keys[i].textContent);
         }
       })
-      .catch(error => {
-        document.getElementById('resultado').textContent = 'Error cargando files.xml';
-        console.error(error);
+      .catch(err => {
+        document.getElementById('resultado').textContent = "Error al cargar files.xml";
+        console.error(err);
       });
 
-    // Función que se ejecuta al hacer clic en "Buscar y Descargar"
     function buscarArchivo() {
-      const id = document.getElementById('inputId').value.trim();
-      const archivo = `${id}.zip`;
+      const inputId = document.getElementById('inputId').value.trim();
+      const archivo = inputId + ".zip";
+      const resultado = document.getElementById('resultado');
 
       if (archivosDisponibles.includes(archivo)) {
-        const url = `https://steamdatabase.s3.eu-north-1.amazonaws.com/${archivo}`;
-        document.getElementById('resultado').textContent = 'Descargando archivo...';
-
-        // Crear enlace y forzar descarga
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = archivo;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-
+        resultado.textContent = "Descargando: " + archivo;
+        window.location.href = `https://steamdatabase.s3.eu-north-1.amazonaws.com/${archivo}`;
       } else {
-        document.getElementById('resultado').textContent = '❌ Archivo no encontrado.';
+        resultado.textContent = "Archivo no encontrado";
       }
     }
   </script>
