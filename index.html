@@ -1,73 +1,60 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>Archivos disponibles para descargar</title>
+  <meta charset="UTF-8">
+  <title>Descarga Steam ZIP</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background: #111;
-      color: #eee;
-    }
-    a {
-      color: #ffa500;
-      text-decoration: none;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
-    ul {
-      list-style: none;
-      padding-left: 0;
-    }
-    li {
-      margin: 8px 0;
-    }
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    input, button { padding: 8px; font-size: 16px; }
+    #resultado { margin-top: 15px; font-weight: bold; }
   </style>
 </head>
 <body>
-  <h1>Archivos disponibles para descargar</h1>
-  <ul id="fileList">Cargando...</ul>
+  <h1>Buscador de Archivos Steam</h1>
+  <input type="text" id="inputId" placeholder="Introduce el número (ej: 12345)" />
+  <button onclick="buscarArchivo()">Buscar y Descargar</button>
+  <div id="resultado"></div>
 
   <script>
+    let archivosDisponibles = [];
+
+    // Cargar y procesar files.xml al iniciar la página
     fetch('files.xml')
-      .then(response => {
-        if (!response.ok) throw new Error('No se pudo cargar files.xml');
-        return response.text();
-      })
-      .then(str => {
+      .then(response => response.text())
+      .then(data => {
         const parser = new DOMParser();
-        const xml = parser.parseFromString(str, "application/xml");
-        const ns = "http://s3.amazonaws.com/doc/2006-03-01/";
-        const keys = xml.getElementsByTagNameNS(ns, 'Key');
-        
-        const ul = document.getElementById('fileList');
-        ul.innerHTML = '';
-
-        if (keys.length === 0) {
-          ul.innerHTML = '<li>No se encontraron archivos.</li>';
-          return;
-        }
-
+        const xml = parser.parseFromString(data, 'application/xml');
+        const keys = xml.getElementsByTagName('Key');
         for (let i = 0; i < keys.length; i++) {
-          const fileName = keys[i].textContent;
-          // Validar que termine en .zip por si acaso
-          if (!fileName.toLowerCase().endsWith('.zip')) continue;
-
-          const li = document.createElement('li');
-          const a = document.createElement('a');
-          a.href = `https://steamdatabase.s3.eu-north-1.amazonaws.com/${fileName}`;
-          a.target = "_blank";
-          a.rel = "noopener noreferrer";
-          a.textContent = fileName;
-          li.appendChild(a);
-          ul.appendChild(li);
+          archivosDisponibles.push(keys[i].textContent.trim());
         }
       })
-      .catch(err => {
-        document.getElementById('fileList').innerHTML = `<li style="color:red;">Error: ${err.message}</li>`;
+      .catch(error => {
+        document.getElementById('resultado').textContent = 'Error cargando files.xml';
+        console.error(error);
       });
+
+    // Función que se ejecuta al hacer clic en "Buscar y Descargar"
+    function buscarArchivo() {
+      const id = document.getElementById('inputId').value.trim();
+      const archivo = `${id}.zip`;
+
+      if (archivosDisponibles.includes(archivo)) {
+        const url = `https://steamdatabase.s3.eu-north-1.amazonaws.com/${archivo}`;
+        document.getElementById('resultado').textContent = 'Descargando archivo...';
+
+        // Crear enlace y forzar descarga
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = archivo;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+      } else {
+        document.getElementById('resultado').textContent = '❌ Archivo no encontrado.';
+      }
+    }
   </script>
 </body>
 </html>
