@@ -2,11 +2,33 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Ejemplo mínimo de lectura XML</title>
+  <title>Archivos disponibles para descargar</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #111;
+      color: #eee;
+    }
+    a {
+      color: #ffa500;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    ul {
+      list-style: none;
+      padding-left: 0;
+    }
+    li {
+      margin: 8px 0;
+    }
+  </style>
 </head>
 <body>
-  <h1>Archivos disponibles</h1>
-  <ul id="fileList"></ul>
+  <h1>Archivos disponibles para descargar</h1>
+  <ul id="fileList">Cargando...</ul>
 
   <script>
     fetch('files.xml')
@@ -15,24 +37,36 @@
         return response.text();
       })
       .then(str => {
-        // Parsear XML
         const parser = new DOMParser();
         const xml = parser.parseFromString(str, "application/xml");
-        
-        // Buscar todos los elementos <Key>
-        const keys = xml.getElementsByTagName('Key');
+        const ns = "http://s3.amazonaws.com/doc/2006-03-01/";
+        const keys = xml.getElementsByTagNameNS(ns, 'Key');
         
         const ul = document.getElementById('fileList');
-        ul.innerHTML = ''; // limpiar
-        
-        for(let i = 0; i < keys.length; i++) {
+        ul.innerHTML = '';
+
+        if (keys.length === 0) {
+          ul.innerHTML = '<li>No se encontraron archivos.</li>';
+          return;
+        }
+
+        for (let i = 0; i < keys.length; i++) {
+          const fileName = keys[i].textContent;
+          // Validar que termine en .zip por si acaso
+          if (!fileName.toLowerCase().endsWith('.zip')) continue;
+
           const li = document.createElement('li');
-          li.textContent = keys[i].textContent;
+          const a = document.createElement('a');
+          a.href = `https://steamdatabase.s3.eu-north-1.amazonaws.com/${fileName}`;
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+          a.textContent = fileName;
+          li.appendChild(a);
           ul.appendChild(li);
         }
       })
       .catch(err => {
-        document.body.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+        document.getElementById('fileList').innerHTML = `<li style="color:red;">Error: ${err.message}</li>`;
       });
   </script>
 </body>
