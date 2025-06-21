@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Descarga Steam ZIP</title>
+  <meta charset="UTF-8" />
+  <title>Descargar archivo Steam</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
     input, button { padding: 10px; font-size: 16px; }
@@ -10,42 +10,33 @@
   </style>
 </head>
 <body>
-  <h1>Buscador de Archivos Steam</h1>
-  <input type="text" id="inputId" placeholder="Introduce el número (ej: 12345)" />
-  <button onclick="buscarArchivo()">Buscar y Descargar</button>
+  <h1>Buscar archivo por ID</h1>
+  <input type="text" id="inputId" placeholder="Introduce el número de ID" />
+  <button onclick="buscarYDescargar()">Buscar y Descargar</button>
   <div id="resultado"></div>
 
   <script>
-    let archivosDisponibles = [];
-
-    // Cargar y procesar files.xml al iniciar la página
-    fetch('files.xml')
-      .then(res => res.text())
-      .then(str => {
-        const parser = new DOMParser();
-        const xml = parser.parseFromString(str, "application/xml");
-        const keys = xml.getElementsByTagName("Key");
-        for (let i = 0; i < keys.length; i++) {
-          archivosDisponibles.push(keys[i].textContent);
-        }
-      })
-      .catch(err => {
-        document.getElementById('resultado').textContent = "Error al cargar files.xml";
-        console.error(err);
-      });
-
-    function buscarArchivo() {
-      const inputId = document.getElementById('inputId').value.trim();
-      const archivo = inputId + ".zip";
+    function buscarYDescargar() {
+      const id = document.getElementById('inputId').value.trim();
+      const url = `https://steamdatabase.s3.eu-north-1.amazonaws.com/${id}.zip`;
       const resultado = document.getElementById('resultado');
 
-      if (archivosDisponibles.includes(archivo)) {
-        resultado.textContent = "Descargando: " + archivo;
-        window.location.href = `https://steamdatabase.s3.eu-north-1.amazonaws.com/${archivo}`;
-      } else {
-        resultado.textContent = "Archivo no encontrado";
-      }
+      // Verificamos si el archivo existe antes de intentar descargar
+      fetch(url, { method: 'HEAD' })
+        .then(response => {
+          if (response.ok) {
+            resultado.textContent = `Descargando archivo ${id}.zip...`;
+            window.location.href = url; // Inicia la descarga
+          } else {
+            resultado.textContent = "Archivo no encontrado.";
+          }
+        })
+        .catch(error => {
+          console.error("Error al verificar el archivo:", error);
+          resultado.textContent = "Error al verificar el archivo.";
+        });
     }
   </script>
 </body>
 </html>
+
