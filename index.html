@@ -2,221 +2,38 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>🔥 Manifest Pulse by Angelpro09_Dev</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet" />
-  <style>
-    :root {
-      --orange: #ffaa00;
-      --yellow: #ffdd00;
-      --neon: #ff6ec7;
-      --bg-dark: #0b0b0b;
-      --glass: rgba(255, 255, 255, 0.06);
-    }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Orbitron', sans-serif;
-      background: linear-gradient(135deg, #0b0b0b, #111);
-      color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    .container {
-      background: var(--glass);
-      padding: 40px;
-      border-radius: 20px;
-      backdrop-filter: blur(10px);
-      text-align: center;
-      width: 90%;
-      max-width: 500px;
-      box-shadow: 0 0 30px rgba(255, 153, 0, 0.3);
-      animation: fadeIn 1s ease-in-out;
-    }
-
-    h1 {
-      font-size: 2.2rem;
-      margin-bottom: 25px;
-      background: linear-gradient(270deg, red, orange, yellow, lime, cyan, blue, violet);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-size: 400% 400%;
-      animation: rgbText 6s ease infinite;
-    }
-
-    input {
-      padding: 15px;
-      font-size: 1rem;
-      border: 2px solid var(--orange);
-      border-radius: 10px;
-      width: 100%;
-      background: #1a1a1a;
-      color: #fff;
-      margin-bottom: 20px;
-      transition: 0.3s ease;
-      box-shadow: 0 0 10px var(--orange);
-    }
-
-    input:focus {
-      outline: none;
-      box-shadow: 0 0 20px var(--yellow);
-      border-color: var(--yellow);
-    }
-
-    button {
-      padding: 15px 30px;
-      font-size: 1rem;
-      border: none;
-      border-radius: 12px;
-      background: linear-gradient(270deg, var(--yellow), var(--orange), var(--yellow));
-      background-size: 400% 400%;
-      color: #000;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 0 0 25px var(--orange);
-      animation: rgbButton 4s ease infinite, pulse 2s infinite;
-      transition: transform 0.2s ease;
-    }
-
-    button:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 35px var(--yellow);
-    }
-
-    .footer {
-      margin-top: 30px;
-      font-size: 0.9rem;
-      opacity: 0.8;
-      color: var(--yellow);
-      text-shadow: 0 0 8px var(--orange);
-    }
-
-    .error {
-      margin-top: 15px;
-      color: #ff4c4c;
-      font-weight: bold;
-      text-shadow: 0 0 8px #ff0000;
-    }
-
-    @keyframes rgbText {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
-    @keyframes rgbButton {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
-    @keyframes pulse {
-      0%, 100% { box-shadow: 0 0 15px var(--orange); }
-      50% { box-shadow: 0 0 30px var(--yellow); }
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(30px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    @media (max-width: 480px) {
-      h1 { font-size: 1.5rem; }
-      button { width: 100%; }
-    }
-  </style>
+  <title>Ejemplo mínimo de lectura XML</title>
 </head>
 <body>
-  <div class="container">
-    <h1>🔥 Manifest Pulse</h1>
-    <input
-      type="number"
-      id="numberInput"
-      placeholder="Introduce un ID de manifest..."
-      autocomplete="off"
-    />
-    <button id="downloadBtn">🚀 Descargar Manifest</button>
-    <div id="message" class="error" style="display:none;"></div>
-    <div class="footer">✨ Hecho con pasión por Angelpro09_Dev</div>
-  </div>
+  <h1>Archivos disponibles</h1>
+  <ul id="fileList"></ul>
 
   <script>
-    // Array donde guardaremos los archivos disponibles desde files.xml
-    let archivosDisponibles = [];
-
-    async function cargarXML() {
-      try {
-        // Cambia 'files.xml' por la URL pública si usas GitHub Pages o la local si pruebas en local
-        const response = await fetch('files.xml');
-        if (!response.ok) throw new Error('No se pudo cargar la lista de archivos.');
-        const text = await response.text();
-
+    fetch('files.xml')
+      .then(response => {
+        if (!response.ok) throw new Error('No se pudo cargar files.xml');
+        return response.text();
+      })
+      .then(str => {
         // Parsear XML
         const parser = new DOMParser();
-        const xml = parser.parseFromString(text, "application/xml");
-
-        // Extraer los nombres de archivos de las etiquetas <Key>
-        const keys = [...xml.querySelectorAll('Contents > Key')];
-        archivosDisponibles = keys.map(k => k.textContent.trim());
-        console.log('Archivos cargados:', archivosDisponibles.length);
-      } catch (error) {
-        mostrarMensaje(error.message, true);
-      }
-    }
-
-    function mostrarMensaje(msg, error = false) {
-      const messageDiv = document.getElementById('message');
-      messageDiv.style.display = 'block';
-      messageDiv.textContent = msg;
-      messageDiv.style.color = error ? '#ff4c4c' : '#00ff00';
-    }
-
-    function ocultarMensaje() {
-      const messageDiv = document.getElementById('message');
-      messageDiv.style.display = 'none';
-      messageDiv.textContent = '';
-    }
-
-    function descargarArchivo(id) {
-      // Construir nombre archivo
-      const nombreArchivo = id + '.zip';
-
-      if (!archivosDisponibles.includes(nombreArchivo)) {
-        mostrarMensaje('❌ Archivo no encontrado.', true);
-        return;
-      }
-
-      ocultarMensaje();
-
-      const url = `https://steamdatabase.s3.eu-north-1.amazonaws.com/${nombreArchivo}`;
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = nombreArchivo;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }
-
-    document.getElementById('downloadBtn').addEventListener('click', () => {
-      const numero = document.getElementById('numberInput').value.trim();
-      if (!numero) {
-        mostrarMensaje('⚠️ Por favor, introduce un número válido.', true);
-        return;
-      }
-      descargarArchivo(numero);
-    });
-
-    // Cargar el XML al iniciar la página
-    window.onload = cargarXML;
+        const xml = parser.parseFromString(str, "application/xml");
+        
+        // Buscar todos los elementos <Key>
+        const keys = xml.getElementsByTagName('Key');
+        
+        const ul = document.getElementById('fileList');
+        ul.innerHTML = ''; // limpiar
+        
+        for(let i = 0; i < keys.length; i++) {
+          const li = document.createElement('li');
+          li.textContent = keys[i].textContent;
+          ul.appendChild(li);
+        }
+      })
+      .catch(err => {
+        document.body.innerHTML = `<p style="color:red;">Error: ${err.message}</p>`;
+      });
   </script>
 </body>
 </html>
